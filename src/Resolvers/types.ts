@@ -3,12 +3,14 @@ import { Field, InputType, ObjectType } from "type-graphql";
 import { Request, Response } from "express";
 import redis from 'redis'
 
+//* Context Type
 export type MyContext = {
   req: Request & { session: { userId: number } },
   res: Response,
   redisClient: redis.RedisClient
 }
 
+//* Input Types
 @InputType()
 export class CreateUserInputType {
   @Field()
@@ -51,6 +53,7 @@ export class ForgotPasswordInputType {
   password: string
 }
 
+//* Response Types
 @ObjectType()
 class FieldError {
   @Field()

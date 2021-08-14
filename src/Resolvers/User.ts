@@ -239,6 +239,8 @@ export class UserResolver {
       }
     }
 
+    redisClient.DEL(`${user.id}:code`)
+
     user.verified = true
     await user.save()
 
@@ -326,7 +328,7 @@ export class UserResolver {
     }
 
     const getCode = (): Promise<string | null> => new Promise((res, rej) => {
-      redisClient.get(`${user.id}:code`, async (err, data) => {
+      redisClient.get(`${email}:code`, async (err, data) => {
         if (err) rej(err)
         res(data)
       })
@@ -342,6 +344,8 @@ export class UserResolver {
         }]
       }
     }
+
+    redisClient.DEL(`${email}:code`)
    
     const hashedPass = await hash(password)
     user.password = hashedPass

@@ -21,6 +21,7 @@ export class User extends BaseEntity {
   password!: string
 
   @Column({ default: false })
+
   @Field()
   verified: boolean
 

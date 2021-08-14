@@ -30,6 +30,27 @@ export class LoginUserInputType {
   password: string
 }
 
+@InputType()
+export class UpdateUserPasswordInputType {
+  @Field()
+  oldPassword: string
+
+  @Field()
+  newPassword: string
+}
+
+@InputType()
+export class ForgotPasswordInputType {
+  @Field()
+  code: string
+
+  @Field()
+  email: string
+
+  @Field()
+  password: string
+}
+
 @ObjectType()
 class FieldError {
   @Field()

@@ -1,6 +1,6 @@
 import { User } from "../entities/User";
 import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
-import { CreateUserInputType, UserResponseType, LoginUserInputType, MyContext, VerificationResponseType } from "./types";
+import { CreateUserInputType, UserResponseType, LoginUserInputType, MyContext, VerificationResponseType, UpdateUserPasswordInputType, ForgotPasswordInputType } from "./types";
 import { hash, verify } from "argon2";
 import validator from "validator";
 import { SendVerificationMail } from "../Utils/Mailer";
@@ -50,12 +50,32 @@ export class UserResolver {
 
     const randomCode = Math.floor(100000 + Math.random() * 900000)
     redisClient.setex(`${user.id}:code`, 300, randomCode.toString())
-    SendVerificationMail(user.email, randomCode)
+    SendVerificationMail(user.email, randomCode, true)
 
-    return {
-      message: `Verification code has been sent to the email: ${user.email}`
+    return { message: `Verification code has been sent to the email: ${user.email}` }
+
+  }
+
+  @Query(() => VerificationResponseType)
+  async getForgotPasswordCode(
+    @Arg(`email`) email: string,
+    @Ctx() { redisClient }: MyContext
+  ): Promise<VerificationResponseType> {
+
+    if (!validator.isEmail(email) || validator.isEmpty(email)) {
+      return {
+        errors: [{
+          field: 'email',
+          message: 'Please enter a valid email'
+        }]
+      }
     }
 
+    const randomCode = Math.floor(100000 + Math.random() * 900000)
+    redisClient.setex(`${email}:code`, 300, randomCode.toString())
+    SendVerificationMail(email, randomCode, false)
+
+    return { message: `Email successfully sent!` }
   }
 
   @Mutation(() => UserResponseType)
@@ -224,4 +244,112 @@ export class UserResolver {
 
     return { user }
   }
+
+  @Mutation(() => VerificationResponseType)
+  async updateUserPassword(
+    @Arg(`options`) options: UpdateUserPasswordInputType,
+    @Ctx() { req }: MyContext
+  ): Promise<VerificationResponseType> {
+
+    const { oldPassword, newPassword } = options
+
+    const user = await User.findOne({ id: req.session.userId })
+
+    if (!user) {
+      return {
+        errors: [{
+          field: 'user',
+          message: 'User is not logged in!'
+        }]
+      }
+    }
+
+    if (!(await verify(user.password, oldPassword))) {
+      return {
+        errors: [{
+          field: 'oldPassword',
+          message: 'Invalid old password entered!'
+        }]
+      }
+    }
+
+    if (newPassword.length < 8) {
+      return {
+        errors: [{
+          field: 'newPassword',
+          message: 'Password must be atleast 8 characters'
+        }]
+      }
+    }
+
+    const hashedPass = await hash(newPassword)
+    user.password = hashedPass
+    await user.save()
+
+    return { message: 'Password changed successfully!' }
+  }
+
+  @Mutation(() => VerificationResponseType)
+  async forgotPassword(
+    @Arg(`options`) options: ForgotPasswordInputType,
+    @Ctx() { req, redisClient }: MyContext
+  ): Promise<VerificationResponseType> {
+    const { email, code, password } = options
+
+    if (!validator.isEmail(email) || validator.isEmpty(email)) {
+      return {
+        errors: [{
+          field: 'email',
+          message: 'Please provide a valid email'
+        }]
+      }
+    }
+
+    if (password.length < 8) {
+      return {
+        errors: [{
+          field: 'password',
+          message: 'Password must be atleast 8 characters'
+        }]
+      }
+    }
+    
+    const user = await User.findOne({ email })
+
+    if (!user) {
+      return {
+        errors: [{
+          field: 'email',
+          message: 'Please provide a valid user email'
+        }]
+      }
+    }
+
+    const getCode = (): Promise<string | null> => new Promise((res, rej) => {
+      redisClient.get(`${user.id}:code`, async (err, data) => {
+        if (err) rej(err)
+        res(data)
+      })
+    })
+
+    const generatedCode = await getCode()   
+
+    if (generatedCode !== code) {
+      return {
+        errors: [{
+          field: 'code',
+          message: 'Invalid code provided!'
+        }]
+      }
+    }
+   
+    const hashedPass = await hash(password)
+    user.password = hashedPass
+    await user.save()
+    
+    req.session.userId = user.id
+    return { message: 'Password changed successfully!' }
+
+  }
+
 }

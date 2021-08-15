@@ -11,8 +11,7 @@ export const SendVerificationMail = (email: string, code: number, verification: 
   })
 
   const html = verification ? 
-    `
-      <h3>Thank You for signing up for our app<h3/>
+    ` <h3>Thank You for signing up for our app<h3/>
       <p>Your verification code is: ${code}<p/>
       <p>This code is valid for 5 minutes<p/>
     ` : 
@@ -25,7 +24,12 @@ export const SendVerificationMail = (email: string, code: number, verification: 
     from: process.env.GMAILEMAIL,
     to: email,
     subject: 'APPNAME: Verification Code',
-    html
+    html: `<!DOCTYPE html>
+      <html lang="en">
+        <body>
+          ${html} 
+        </body>
+      </html>`
   }, (err) => {
     if (err) {
       console.log(err.message)

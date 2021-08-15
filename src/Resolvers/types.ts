@@ -55,7 +55,7 @@ export class ForgotPasswordInputType {
 
 //* Response Types
 @ObjectType()
-class FieldError {
+export class FieldError {
   @Field()
   field: string
 

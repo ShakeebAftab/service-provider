@@ -8,12 +8,13 @@ import { ApolloServer } from 'apollo-server-express'
 import { createConnection } from 'typeorm'
 import { buildSchema } from 'type-graphql'
 import { User } from './entities/User'
-import { UserResolver } from './Resolvers/User'
-import redis from "redis";
+import { UserQueryResolver } from './Resolvers/UserQueries'
+import { UserMutationResolver } from './Resolvers/UserMutations'
 import session from 'express-session'
 import connectRedis from 'connect-redis'
 import cors from 'cors'
 import { ApolloServerPluginLandingPageGraphQLPlayground } from 'apollo-server-core'
+import { redisClient } from './Utils/Redis'
 
 const PORT = process.env.PORT
 const redisSecret = process.env.REDISSECRET
@@ -34,12 +35,11 @@ const runServer = async () => {
     })
 
     const schema = await buildSchema({
-      resolvers: [UserResolver],
+      resolvers: [UserQueryResolver, UserMutationResolver],
       validate: false
     })
 
     const redisStore = connectRedis(session)
-    const redisClient = redis.createClient()
 
     const app = express()
 

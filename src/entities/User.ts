@@ -1,10 +1,10 @@
 import { Field, ID, ObjectType } from "type-graphql";
-import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { BaseEntity, Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Address } from "./Address";
 
 @ObjectType()
 @Entity()
 export class User extends BaseEntity {
-
   @Field(() => ID)
   @PrimaryGeneratedColumn()
   id!: number
@@ -20,9 +20,19 @@ export class User extends BaseEntity {
   @Column()
   password!: string
 
-  @Column({ default: false })
-
   @Field()
+  @Column({ default: false })
   verified: boolean
 
+  @Field(() => [ Address ])
+  @OneToMany(() => Address, address => address.owner)
+  address: Address[]
+
+  @Field(() => String)
+  @CreateDateColumn()
+  createdAt: Date
+
+  @Field(() => String)
+  @UpdateDateColumn()
+  updatedAt: Date
 }

@@ -1,25 +1,21 @@
-import { Arg, Ctx, Query, Resolver } from "type-graphql";
-import { UserResponseType, MyContext, VerificationResponseType } from "./types";
+import { Arg, Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
+import { UserResponseType, MyContext, VerificationResponseType, GetForgotPasswordInputType } from "./types";
 import { SendVerificationMail } from "../Utils/Mailer";
 import { SetRedisValue } from "../Utils/Redis";
-import { checkEmail, checkUser, checkUserByEmail, checkVerification } from "../Utils/UserErrors";
+import { isAuth, isUser, isVerified, isEmail } from "../Middleware/Middleware";
 
 @Resolver()
 export class UserQueryResolver {
   @Query(() => UserResponseType)
+  @UseMiddleware(isAuth)
   async getMe(@Ctx() { req }: MyContext): Promise<UserResponseType> {
-    const { errors, user } = await checkUser(req.session.userId)
-    if (!user) return { errors }
-    return { user }
+    return { user: req.user }
   }
 
   @Query(() => VerificationResponseType)
+  @UseMiddleware(isAuth, isVerified)
   async getVerificationCode(@Ctx() { req }: MyContext): Promise<VerificationResponseType> {
-    const { errors, user } = await checkUser(req.session.userId)
-    if (!user) return { errors }
-
-    const verificationError = checkVerification(user)
-    if (verificationError) return { errors: verificationError }
+    const user = req.user
 
     const randomCode = Math.floor(100000 + Math.random() * 900000)
     SetRedisValue(`${user.id}:code`, 300, randomCode.toString())
@@ -29,14 +25,9 @@ export class UserQueryResolver {
   }
 
   @Query(() => VerificationResponseType)
-  async getForgotPasswordCode(@Arg(`email`) email: string): Promise<VerificationResponseType> {
-
-    const emailError = checkEmail(email)
-    if (emailError) return { errors: emailError }
-
-    const { errors, user } = await checkUserByEmail(email)
-    if (!user) return { errors }
-
+  @UseMiddleware(isUser, isEmail)
+  async getForgotPasswordCode(@Arg(`options`) options: GetForgotPasswordInputType): Promise<VerificationResponseType> {
+    const { email } = options
     const randomCode = Math.floor(100000 + Math.random() * 900000)
     SetRedisValue(`${email}:code`, 300, randomCode.toString())
     SendVerificationMail(email, randomCode, false)

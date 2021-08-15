@@ -4,15 +4,14 @@ config()
 import 'reflect-metadata'
 
 import express from 'express'
-import { ApolloServer } from 'apollo-server-express'
-import { createConnection } from 'typeorm'
-import { buildSchema } from 'type-graphql'
-import { User } from './entities/User'
-import { UserQueryResolver } from './Resolvers/UserQueries'
-import { UserMutationResolver } from './Resolvers/UserMutations'
 import session from 'express-session'
 import connectRedis from 'connect-redis'
 import cors from 'cors'
+import { ApolloServer } from 'apollo-server-express'
+import { createConnection } from 'typeorm'
+import { buildSchema } from 'type-graphql'
+import { User, Address } from './entities/Entitties'
+import { UserQueryResolver, UserMutationResolver } from './Resolvers/Resolvers'
 import { ApolloServerPluginLandingPageGraphQLPlayground } from 'apollo-server-core'
 import { redisClient } from './Utils/Redis'
 
@@ -31,7 +30,7 @@ const runServer = async () => {
         password: process.env.DBPASSWORD,
         logging: true,
         synchronize: true,
-        entities: [User]
+        entities: [User, Address]
     })
 
     const schema = await buildSchema({

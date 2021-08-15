@@ -1,5 +1,6 @@
 import { Field, ID, ObjectType } from "type-graphql";
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { User } from "./User";
 
 @ObjectType()
 @Entity()
@@ -31,4 +32,20 @@ export class Address {
   @Field()
   @Column()
   phone: string
+
+  @Field()
+  @Column()
+  ownerId: number
+
+  @Field(() => User)
+  @ManyToOne(() => User, user => user.address)
+  owner: User
+
+  @Field(() => String)
+  @CreateDateColumn()
+  createdAt: Date
+
+  @Field(() => String)
+  @UpdateDateColumn()
+  updatedAt: Date
 }

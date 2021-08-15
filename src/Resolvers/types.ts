@@ -5,9 +5,14 @@ import redis from 'redis'
 
 //* Context Type
 export type MyContext = {
-  req: Request & { session: { userId: number } },
+  req: Request & { session: { userId: number } } & { user: User }
   res: Response,
   redisClient: redis.RedisClient
+}
+
+//* Middleware Type
+export type isAuthMiddleware = {
+  errors: FieldError[]
 }
 
 //* Input Types
@@ -38,7 +43,19 @@ export class UpdateUserPasswordInputType {
   oldPassword: string
 
   @Field()
-  newPassword: string
+  password: string
+}
+
+@InputType()
+export class VerifyUserInputType {
+  @Field()
+  code: string
+}
+
+@InputType()
+export class GetForgotPasswordInputType {
+  @Field()
+  email: string
 }
 
 @InputType()

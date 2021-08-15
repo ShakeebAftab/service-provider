@@ -1,28 +1,20 @@
-import { User } from "../entities/User";
-import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
-import { CreateUserInputType, UserResponseType, LoginUserInputType, MyContext, VerificationResponseType, UpdateUserPasswordInputType, ForgotPasswordInputType } from "./types";
+import { User } from "../entities/Entitties";
+import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
+import { CreateUserInputType, UserResponseType, LoginUserInputType, MyContext, VerificationResponseType, UpdateUserPasswordInputType, ForgotPasswordInputType, VerifyUserInputType } from "./types";
 import { hash } from "argon2";
 import { DelRedisKey, GetRedisValue } from "../Utils/Redis";
-import { checkCode, checkEmail, checkEmptyField, checkPassword, checkUser, checkUserByEmail, checkVerification, comparePassword } from "../Utils/UserErrors";
+import { checkCode, comparePassword } from "../Utils/UserUtils";
+import { isAuth, isVerified, isUser, isEmpty, isEmail, isStrongPassword } from "../Middleware/Middleware";
 
 @Resolver()
 export class UserMutationResolver {
   @Mutation(() => UserResponseType)
+  @UseMiddleware(isEmpty, isEmail, isStrongPassword)
   async createUser(
     @Arg(`options`) options: CreateUserInputType,
     @Ctx() { req }: MyContext
   ): Promise<UserResponseType> {
     const { name, email, password } = options
-
-    const nameError = checkEmptyField(`name`, name)
-    if (nameError) return { errors: [ nameError ] }
-
-    const emailError = checkEmail(email)
-    if (emailError) return { errors: emailError }
-
-    const passwordError = checkPassword(password)
-    if (passwordError) return { errors: passwordError }
-
     const hashedPass = await hash(password)
 
     try {
@@ -56,21 +48,14 @@ export class UserMutationResolver {
   }
 
   @Mutation(() => UserResponseType)
+  @UseMiddleware(isEmpty, isUser, isStrongPassword)
   async login(
     @Arg(`options`) options: LoginUserInputType,
     @Ctx() { req }: MyContext
   ): Promise<UserResponseType> {
 
-    const { email, password } = options
-
-    const emailError = checkEmail(email)
-    if (emailError) return { errors: emailError }
-
-    const passwordError = checkEmptyField(`password`, password)
-    if (passwordError) return { errors: [ passwordError ] }
-
-    const { errors, user } = await checkUserByEmail(email)
-    if (!user) return { errors }
+    const { password } = options
+    const user = req.user
 
     const correctPassError = await  comparePassword(user.password, password)
     if (correctPassError) return { errors: correctPassError }
@@ -81,17 +66,14 @@ export class UserMutationResolver {
   }
 
   @Mutation(() => UserResponseType)
+  @UseMiddleware(isEmpty, isAuth, isVerified)
   async verifyUser(
-    @Arg(`code`) code: string,
+    @Arg(`options`) options: VerifyUserInputType,
     @Ctx() { req }: MyContext
   ): Promise<UserResponseType> {
 
-    const { errors, user } = await checkUser(req.session.userId)
-    if (!user) return { errors }
-
-    const verificationError = checkVerification(user)
-    if (verificationError) return { errors: verificationError }
-
+    const { code } = options    
+    const user = req.user
     const generatedCode = await GetRedisValue(`${user.id}:code`)
 
     const codeError = checkCode(generatedCode, code.toString())
@@ -106,23 +88,19 @@ export class UserMutationResolver {
   }
 
   @Mutation(() => VerificationResponseType)
+  @UseMiddleware(isEmpty, isAuth, isStrongPassword)
   async updateUserPassword(
     @Arg(`options`) options: UpdateUserPasswordInputType,
     @Ctx() { req }: MyContext
   ): Promise<VerificationResponseType> {
 
-    const { oldPassword, newPassword } = options
-
-    const { errors, user } = await checkUser(req.session.userId)
-    if (!user) return { errors }
+    const user = req.user
+    const { oldPassword, password } = options
 
     const correctPassError = await  comparePassword(user.password, oldPassword)
     if (correctPassError) return { errors: correctPassError }
 
-    const passwordError = checkPassword(newPassword)
-    if (passwordError) return { errors: passwordError }
-
-    const hashedPass = await hash(newPassword)
+    const hashedPass = await hash(password)
     user.password = hashedPass
     await user.save()
 
@@ -130,20 +108,13 @@ export class UserMutationResolver {
   }
 
   @Mutation(() => VerificationResponseType)
+  @UseMiddleware(isEmpty, isUser, isStrongPassword)
   async forgotPassword(
     @Arg(`options`) options: ForgotPasswordInputType,
     @Ctx() { req }: MyContext
   ): Promise<VerificationResponseType> {
+    const user = req.user
     const { email, code, password } = options
-
-    const emailError = checkEmail(email)
-    if (emailError) return { errors: emailError }
-
-    const passwordError = checkPassword(password)
-    if (passwordError) return { errors: passwordError }
-
-    const { errors, user } = await checkUserByEmail(email)
-    if (!user) return { errors }
 
     const generatedCode = await GetRedisValue(`${email}:code`)
 

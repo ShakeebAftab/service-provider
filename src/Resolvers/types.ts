@@ -1,5 +1,5 @@
-import { User } from "../entities/User";
-import { Field, InputType, ObjectType } from "type-graphql";
+import { User, Address } from "../Entities/Entitties";
+import { Field, ID, InputType, ObjectType } from "type-graphql";
 import { Request, Response } from "express";
 import redis from 'redis'
 
@@ -70,6 +70,60 @@ export class ForgotPasswordInputType {
   password: string
 }
 
+//* Address Types
+@InputType()
+export class NewAddressInputType {
+  @Field()
+  name: string
+
+  @Field()
+  addr: string
+
+  @Field()
+  city: string
+
+  @Field()
+  country: string
+
+  @Field()
+  postalCode: string
+
+  @Field()
+  phone: string
+}
+
+//* Address Types
+@InputType()
+export class UpdateAddressInputType {
+
+  @Field(() => ID)
+  id: number
+
+  @Field({ nullable: true })
+  name: string
+
+  @Field( { nullable: true })
+  addr: string
+
+  @Field({ nullable: true })
+  city: string
+
+  @Field( { nullable: true })
+  country: string
+
+  @Field({ nullable: true })
+  postalCode: string
+
+  @Field({ nullable: true })
+  phone: string
+}
+
+@InputType()
+export class DeleteAddressInputType {
+  @Field(() => ID)
+  id: number
+}
+
 //* Response Types
 @ObjectType()
 export class FieldError {
@@ -96,4 +150,23 @@ export class VerificationResponseType {
 
   @Field(() => String, { nullable: true })
   message?: string
+}
+
+//* Address Response Type
+@ObjectType()
+export class AddressResponseType {
+  @Field(() => [FieldError], { nullable: true })
+  errors?: FieldError[]
+
+  @Field(() => Address, { nullable: true })
+  address?: Address
+}
+
+@ObjectType()
+export class AddressQueryResponseType {
+  @Field(() => [FieldError], { nullable: true })
+  errors?: FieldError[]
+
+  @Field(() => [ Address ], { nullable: true })
+  address?: Address[]
 }

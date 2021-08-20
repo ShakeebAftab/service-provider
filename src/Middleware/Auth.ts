@@ -1,4 +1,4 @@
-import { User } from "../entities/Entitties"
+import { User } from "../Entities/Entitties"
 import { isAuthMiddleware, MyContext } from "src/Resolvers/types"
 import { MiddlewareFn, NextFn } from "type-graphql"
 

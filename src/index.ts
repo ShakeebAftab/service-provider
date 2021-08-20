@@ -10,8 +10,8 @@ import cors from 'cors'
 import { ApolloServer } from 'apollo-server-express'
 import { createConnection } from 'typeorm'
 import { buildSchema } from 'type-graphql'
-import { User, Address } from './entities/Entitties'
-import { UserQueryResolver, UserMutationResolver } from './Resolvers/Resolvers'
+import { User, Address } from './Entities/Entitties'
+import { UserQueryResolver, UserMutationResolver, AddressQueryResolver, AddressMutationResolver } from './Resolvers/Resolvers'
 import { ApolloServerPluginLandingPageGraphQLPlayground } from 'apollo-server-core'
 import { redisClient } from './Utils/Redis'
 
@@ -34,7 +34,7 @@ const runServer = async () => {
     })
 
     const schema = await buildSchema({
-      resolvers: [UserQueryResolver, UserMutationResolver],
+      resolvers: [UserQueryResolver, UserMutationResolver, AddressQueryResolver, AddressMutationResolver],
       validate: false
     })
 

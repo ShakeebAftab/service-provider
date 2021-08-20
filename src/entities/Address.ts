@@ -1,10 +1,10 @@
 import { Field, ID, ObjectType } from "type-graphql";
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { BaseEntity, Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { User } from "./User";
 
 @ObjectType()
 @Entity()
-export class Address {
+export class Address extends BaseEntity {
   @Field(() => ID)
   @PrimaryGeneratedColumn()
   id: number
@@ -38,7 +38,7 @@ export class Address {
   ownerId: number
 
   @Field(() => User)
-  @ManyToOne(() => User, user => user.address)
+  @ManyToOne(() => User, user => user.address, { eager: true })
   owner: User
 
   @Field(() => String)

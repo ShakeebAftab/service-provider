@@ -1,4 +1,4 @@
-import { User } from "../entities/Entitties";
+import { User } from "../Entities/Entitties";
 import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
 import { CreateUserInputType, UserResponseType, LoginUserInputType, MyContext, VerificationResponseType, UpdateUserPasswordInputType, ForgotPasswordInputType, VerifyUserInputType } from "./types";
 import { hash } from "argon2";
@@ -48,7 +48,7 @@ export class UserMutationResolver {
   }
 
   @Mutation(() => UserResponseType)
-  @UseMiddleware(isEmpty, isUser, isStrongPassword)
+  @UseMiddleware(isEmpty, isUser)
   async login(
     @Arg(`options`) options: LoginUserInputType,
     @Ctx() { req }: MyContext

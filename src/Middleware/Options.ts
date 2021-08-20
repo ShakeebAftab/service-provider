@@ -29,12 +29,12 @@ export const isEmail: MiddlewareFn<MyContext> = ({ args: { options } }, next): a
 }
 
 export const isStrongPassword: MiddlewareFn<MyContext> = ({ args: { options } }, next): any => {
-  if (validator.isStrongPassword(options.password)) return {
-    errros: [{
+  if (!validator.isStrongPassword(options.password)) return {
+    errors: [{
       field: 'password',
       message: 'Please provide a strong password'
     }]
-  }    
+  }
 
   return next()
 }

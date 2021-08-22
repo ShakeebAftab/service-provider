@@ -1,7 +1,7 @@
 import { Address } from "../Entities/Entitties";
 import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
 import { isAuth, isEmpty } from "../Middleware/Middleware";
-import { NewAddressInputType, AddressResponseType, MyContext, UpdateAddressInputType, VerificationResponseType, DeleteAddressInputType } from "./types";
+import { NewAddressInputType, AddressResponseType, MyContext, UpdateAddressInputType, VerificationResponseType, AddressIdInputType } from "./types";
 
 @Resolver()
 export class AddressMutationResolver {
@@ -65,7 +65,7 @@ export class AddressMutationResolver {
   @Mutation(() => VerificationResponseType)
   @UseMiddleware(isAuth, isEmpty)
   async delAddess(
-    @Arg(`options`) options: DeleteAddressInputType,
+    @Arg(`options`) options: AddressIdInputType,
     @Ctx() { req }: MyContext
   ): Promise<VerificationResponseType> {  
     const address = await Address.findOne({ id: options.id })

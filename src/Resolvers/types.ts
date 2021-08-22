@@ -92,7 +92,7 @@ export class NewAddressInputType {
   phone: string
 }
 
-//* Address Types
+//* Address Input Types
 @InputType()
 export class UpdateAddressInputType {
 
@@ -119,7 +119,7 @@ export class UpdateAddressInputType {
 }
 
 @InputType()
-export class DeleteAddressInputType {
+export class AddressIdInputType {
   @Field(() => ID)
   id: number
 }
